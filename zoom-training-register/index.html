@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0b1f33">
+<title>Zoom Fibre Technician Training Register</title>
+<style>
+  :root{
+    --bg:#f3f6f9; --card:#fff; --ink:#10202f; --muted:#64748b;
+    --brand:#0b1f33; --accent:#18a0fb; --line:#dbe3ea; --danger:#b42318;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:720px;margin:0 auto;padding:18px}
+  .hero{background:var(--brand);color:white;padding:22px;border-radius:18px;margin-bottom:16px}
+  .hero h1{font-size:24px;margin:0 0 6px}
+  .hero p{margin:0;color:#dbeafe;font-size:14px;line-height:1.45}
+  .card{background:var(--card);border-radius:18px;padding:18px;box-shadow:0 6px 22px rgba(15,23,42,.07);margin-bottom:16px}
+  label{display:block;font-weight:700;margin:14px 0 7px}
+  input{width:100%;font-size:18px;padding:13px;border:1px solid var(--line);border-radius:12px;outline:none;background:#fff}
+  input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(24,160,251,.12)}
+  .sigbox{border:2px dashed #b8c4d0;border-radius:14px;background:white;overflow:hidden;touch-action:none}
+  canvas{display:block;width:100%;height:210px;background:white;touch-action:none}
+  .hint{font-size:13px;color:var(--muted);margin-top:7px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  button{border:0;border-radius:12px;padding:13px 16px;font-size:16px;font-weight:700;cursor:pointer}
+  .primary{background:var(--brand);color:white;flex:1}
+  .secondary{background:#e8eef4;color:var(--ink)}
+  .accent{background:var(--accent);color:white}
+  .danger{background:#fee4e2;color:var(--danger)}
+  .success{display:none;background:#ecfdf3;color:#027a48;border:1px solid #abefc6;padding:12px;border-radius:12px;margin-top:14px;font-weight:700;text-align:center}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .count{font-size:34px;font-weight:800;margin:0}
+  .small{font-size:12px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+  th,td{text-align:left;border-bottom:1px solid var(--line);padding:10px 6px;vertical-align:middle}
+  th{font-size:12px;text-transform:uppercase;color:var(--muted)}
+  td img{max-width:120px;max-height:42px;background:#fff}
+  details summary{cursor:pointer;font-weight:700}
+  .admin-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .admin-actions button{font-size:13px;padding:10px 12px}
+  @media(max-width:520px){.wrap{padding:10px}.hero,.card{border-radius:14px}.meta{grid-template-columns:1fr} canvas{height:180px}}
+  @media print{
+    body{background:white}
+    .hero,.entry-card,.admin-actions,.no-print{display:none!important}
+    .card{box-shadow:none;padding:0}
+    .wrap{max-width:none}
+    table{font-size:12px}
+    td img{max-width:140px;max-height:50px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>Zoom Fibre Technician Training Register</h1>
+    <p>Enter your full name and sign below to confirm attendance.</p>
+  </section>
+
+  <section class="card entry-card">
+    <div class="meta">
+      <div>
+        <label for="training">Training session</label>
+        <input id="training" value="Zoom Fibre Technician Training">
+      </div>
+      <div>
+        <label for="sessionDate">Training date</label>
+        <input id="sessionDate" type="date">
+      </div>
+    </div>
+
+    <label for="name">Technician full name *</label>
+    <input id="name" autocomplete="name" placeholder="e.g. Thabo Mokoena">
+
+    <label for="techno">Technician / employee number</label>
+    <input id="techno" inputmode="text" placeholder="Optional">
+
+    <label for="assistant">Assistant full name</label>
+    <input id="assistant" autocomplete="name" placeholder="Optional">
+
+    <label>Signature *</label>
+    <div class="sigbox"><canvas id="signature"></canvas></div>
+    <div class="hint">Sign inside the box using your finger, stylus or mouse.</div>
+
+    <div class="row">
+      <button class="secondary" id="clearSig" type="button">Clear signature</button>
+      <button class="primary" id="submitBtn" type="button">Confirm attendance</button>
+    </div>
+    <div class="success" id="success">Attendance recorded ✓</div>
+  </section>
+
+  <section class="card">
+    <div class="small">ATTENDEES RECORDED ON THIS DEVICE</div>
+    <p class="count" id="count">0</p>
+
+    <details>
+      <summary>View / export attendance register</summary>
+      <div class="admin-actions no-print">
+        <button class="accent" id="exportCsv">Export CSV</button>
+        <button class="secondary" id="printBtn">Print / Save PDF</button>
+        <button class="danger" id="clearAll">Clear all entries</button>
+      </div>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Technician</th><th>Tech No.</th><th>Assistant</th><th>Date & time</th><th>Signature</th></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <p class="small" style="text-align:center">Records are stored locally on this device. Export or print the register after the session for safekeeping.</p>
+</div>
+
+<script>
+(() => {
+  const KEY = "zoom_fibre_training_register_v1";
+  const nameEl = document.getElementById("name");
+  const techEl = document.getElementById("techno");
+  const assistantEl = document.getElementById("assistant");
+  const trainingEl = document.getElementById("training");
+  const dateEl = document.getElementById("sessionDate");
+  const canvas = document.getElementById("signature");
+  const ctx = canvas.getContext("2d");
+  const success = document.getElementById("success");
+  let drawing = false, signed = false, last = null;
+
+  const localDate = new Date();
+  dateEl.value = [localDate.getFullYear(), String(localDate.getMonth()+1).padStart(2,"0"), String(localDate.getDate()).padStart(2,"0")].join("-");
+
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    const existing = signed ? canvas.toDataURL("image/png") : null;
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width = Math.round(rect.width * ratio);
+    canvas.height = Math.round(rect.height * ratio);
+    ctx.setTransform(ratio,0,0,ratio,0,0);
+    ctx.lineWidth = 2.4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#10202f";
+    if(existing){
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img,0,0,rect.width,rect.height);
+      img.src = existing;
+    }
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  function pos(e){
+    const r = canvas.getBoundingClientRect();
+    const p = e.touches ? e.touches[0] : e;
+    return {x:p.clientX-r.left, y:p.clientY-r.top};
+  }
+  function start(e){
+    e.preventDefault(); drawing=true; signed=true; last=pos(e);
+  }
+  function move(e){
+    if(!drawing) return; e.preventDefault();
+    const p=pos(e); ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p;
+  }
+  function end(e){ if(e) e.preventDefault(); drawing=false; last=null; }
+  canvas.addEventListener("pointerdown", start);
+  canvas.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", end);
+
+  function clearSignature(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    signed=false;
+  }
+  document.getElementById("clearSig").onclick=clearSignature;
+
+  function load(){
+    try{return JSON.parse(localStorage.getItem(KEY) || "[]")}catch{return []}
+  }
+  function save(rows){ localStorage.setItem(KEY, JSON.stringify(rows)); }
+
+  function render(){
+    const rows=load();
+    document.getElementById("count").textContent=rows.length;
+    const tb=document.getElementById("tbody"); tb.innerHTML="";
+    rows.forEach((r,i)=>{
+      const tr=document.createElement("tr");
+      const safe = s => String(s ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+      tr.innerHTML="<td>"+(i+1)+"</td><td>"+safe(r.name)+"</td><td>"+safe(r.techno || "—")+"</td><td>"+safe(r.assistant || "—")+"</td><td>"+safe(r.timestamp)+"</td><td><img src=\""+r.signature+"\" alt=\"Signature\"></td>";
+      tb.appendChild(tr);
+    });
+  }
+
+  function signatureData(){
+    const temp=document.createElement("canvas");
+    temp.width=canvas.width; temp.height=canvas.height;
+    const t=temp.getContext("2d");
+    t.fillStyle="#fff"; t.fillRect(0,0,temp.width,temp.height);
+    t.drawImage(canvas,0,0);
+    return temp.toDataURL("image/jpeg",0.65);
+  }
+
+  document.getElementById("submitBtn").onclick=()=>{
+    const fullName=nameEl.value.trim();
+    if(!fullName){ alert("Please enter your full name."); nameEl.focus(); return; }
+    if(!signed){ alert("Please sign in the signature box."); return; }
+    const rows=load();
+    rows.push({
+      name:fullName,
+      techno:techEl.value.trim(),
+      assistant:assistantEl.value.trim(),
+      training:trainingEl.value.trim(),
+      trainingDate:dateEl.value,
+      timestamp:new Date().toLocaleString("en-ZA", {dateStyle:"medium", timeStyle:"short"}),
+      signature:signatureData()
+    });
+    try{ save(rows); }
+    catch(err){
+      alert("This device's browser storage is full. Please export the current register before adding more entries.");
+      return;
+    }
+    nameEl.value=""; techEl.value=""; assistantEl.value=""; clearSignature(); render();
+    success.style.display="block";
+    setTimeout(()=>success.style.display="none",2200);
+    nameEl.focus();
+  };
+
+  function csvEscape(v){ return '"' + String(v ?? "").replace(/"/g,'""') + '"'; }
+  document.getElementById("exportCsv").onclick=()=>{
+    const rows=load();
+    if(!rows.length){alert("No attendance records yet."); return;}
+    const header=["No.","Technician full name","Technician / employee number","Assistant full name","Training session","Training date","Recorded date & time"];
+    const lines=[header.map(csvEscape).join(",")];
+    rows.forEach((r,i)=>lines.push([i+1,r.name,r.techno,r.assistant || "",r.training,r.trainingDate,r.timestamp].map(csvEscape).join(",")));
+    const blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download="Zoom_Fibre_Training_Register_"+(dateEl.value || "session")+".csv";
+    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  };
+
+  document.getElementById("printBtn").onclick=()=>window.print();
+  document.getElementById("clearAll").onclick=()=>{
+    if(confirm("Delete ALL attendance entries stored on this device? This cannot be undone unless you exported them first.")){
+      localStorage.removeItem(KEY); render();
+    }
+  };
+  render();
+})();
+</script>
+</body>
+</html>
